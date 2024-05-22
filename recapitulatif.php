@@ -18,6 +18,14 @@
         $_SESSION['id'],
     ]);
     $savoirs = $reqSavoirs->fetchAll();
+    
+    // Ajoute d'une requête SQL afin de récupérer les compétences depuis la BDD
+    $reqCompetences = $bdd->prepare('SELECT acquerir.N_ITEM, LIBEL_ENSEMBLE_COMPETENCE, ACQUISE, EN_COURS_ACQUISITION FROM acquerir INNER JOIN item_competence ON acquerir.N_ITEM = item_competence.N_ITEM WHERE IDENTIFIANT_ETUD  = ?');
+    $reqCompetences->execute([
+        $_SESSION['id'],
+    ]);
+    $competences = $reqCompetences->fetchAll();
+
 
     $title = 'Récapitulatif';
     include 'elements/header.php';
@@ -77,28 +85,63 @@
         </tbody>
     </table>
     <?php endif; ?>
- <?php if(count($item_competence) == 0): ?>
-    Aucune compétence n'est enregistré. 
+
+   <!-- Condition permettant d'afficher un message si le recapitulatif ne contient aucun competence --> 
+ <?php if(count($competences) == 0): ?>
+    Aucune compétence acquise n'est enregistré. 
     <?php else: ?>
       <table class="table table-striped">
         <thead>
             <th>
-                Savoirs
+                Compétences acquises
             </th>
             <th>
                 Libelle
             </th>
         </thead>
         <tbody>
-        <?php foreach($item_competences as $item_competence): ?>
+    <!-- Condition permettant d'afficher les competences acquises dans le recapitulatif si ACQUISE = 1 -->
+        <?php foreach($competences as $competence) : ?>
+            <?php if($competence['ACQUISE'] == 1): ?>
             <tr>
                 <td>
-                    <?= $item_competence['N_ITEM'] ?>
+                    <?= $competence['N_ITEM'] ?>
                 </td>
                 <td>
-                    <?= $item_competence['LIBEL_ENSEMBLE_COMPETENCE'] ?>
+                    <?= $competence['LIBEL_ENSEMBLE_COMPETENCE'] ?>
                 </td>
             </tr>
+             <?php endif; ?>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php endif; ?>
+  <!-- Condition permettant d'afficher un message si le recapitulatif ne contient aucun competence en cours d'acquisition --> 
+ <?php if(count($competences) == 0): ?>
+    Aucune compétence en cours d'acquisition n'est enregistré. 
+    <?php else: ?>
+      <table class="table table-striped">
+        <thead>
+            <th>
+                Compétences en cours d'acquisition
+            </th>
+            <th>
+                Libelle
+            </th>
+        </thead>
+        <tbody>
+        <!-- Condition permettant d'afficher les competences en cours d'acquisition dans le récapitulatif si EN_COURS_ACQUISIITION = 1 -->
+        <?php foreach($competences as $competence) : ?>
+            <?php if($competence['EN_COURS_ACQUISITION'] == 1): ?>
+            <tr>
+                <td>
+                    <?= $competence['N_ITEM'] ?>
+                </td>
+                <td>
+                    <?= $competence['LIBEL_ENSEMBLE_COMPETENCE'] ?>
+                </td>
+            </tr>
+             <?php endif; ?>
         <?php endforeach; ?>
         </tbody>
     </table>

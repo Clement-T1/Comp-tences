@@ -18,12 +18,12 @@ $reqUserComp = $bdd->prepare('SELECT * FROM acquerir WHERE IDENTIFIANT_ETUD = ?'
 $reqUserComp->execute([$_SESSION['id']]);
 $userCompetences = $reqUserComp->fetchAll(PDO::FETCH_ASSOC);
 
-// Organiser les compétences de l'utilisateur dans un tableau pour un accès facile
-$userCompetencesMap = [];
-foreach ($userCompetences as $userComp) {
-    $userCompetencesMap[$userComp['N_ITEM']] = [
-        'ACQUISE' => $userComp['ACQUISE'],
-        'EN_COURS_ACQUISITION' => $userComp['EN_COURS_ACQUISITION'],
+// Organiser les compétences de l'utilisateur 
+$Competences_user = [];
+foreach ($userCompetences as $userCompetence) {
+    $Competences_user[$userCompetence['N_ITEM']] = [
+        'ACQUISE' => $userCompetence['ACQUISE'],
+        'EN_COURS_ACQUISITION' => $userCompetence['EN_COURS_ACQUISITION'],
     ];
 }
 
@@ -75,8 +75,8 @@ include 'elements/header.php';
                         <tr>
                             <?php 
                             // Vérifier si la compétence est acquise ou en cours d'acquisition par l'utilisateur
-                            $acquisChecked = isset($userCompetencesMap[$key['N_ITEM']]) && $userCompetencesMap[$key['N_ITEM']]['ACQUISE'] == 1 ? 'checked' : '';
-                            $enCoursChecked = isset($userCompetencesMap[$key['N_ITEM']]) && $userCompetencesMap[$key['N_ITEM']]['EN_COURS_ACQUISITION'] == 1 ? 'checked' : '';
+                            $acquisChecked = isset($Competences_user[$key['N_ITEM']]) && $Competences_user[$key['N_ITEM']]['ACQUISE'] == 1 ? 'checked' : '';
+                            $enCoursChecked = isset($Competences_user[$key['N_ITEM']]) && $Competences_user[$key['N_ITEM']]['EN_COURS_ACQUISITION'] == 1 ? 'checked' : '';
                             ?>
                             <td><input type="checkbox" name="<?= $key['N_ITEM'] ?>_acquis" value="<?= $key['N_ITEM'] ?>" <?= $acquisChecked ?>></td>
                             <td><input type="checkbox" name="<?= $key['N_ITEM'] ?>_enCoursAcquisition" value="<?= $key['N_ITEM'] ?>" <?= $enCoursChecked ?>></td>

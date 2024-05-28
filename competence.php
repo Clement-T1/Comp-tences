@@ -1,23 +1,41 @@
 <?php 
-    session_start();
-    include 'config.php'; // ajout connexion bdd
-    // si la session existe pas soit si l'on est pas connecté on redirige
-    if(!isset($_SESSION['id'])){
-        header('Location:index.php');
-        die();
-    }
+session_start();
+include 'config.php'; // ajout de la connexion à la base de données
 
-    $req = $bdd->prepare('SELECT * FROM item_competence');
-    $req->execute();
-    $itemCompetences = $req->fetchAll();
-    $title = 'Compétences';
-    include 'elements/header.php'; 
+// Si la session n'existe pas ou si l'on n'est pas connecté, on redirige vers la page d'accueil
+if(!isset($_SESSION['id'])){
+    header('Location:index.php');
+    die();
+}
+
+// Récupérer toutes les compétences disponibles
+$req = $bdd->prepare('SELECT * FROM item_competence');
+$req->execute();
+$itemCompetences = $req->fetchAll();
+
+// Récupérer les compétences déjà acquises ou en cours d'acquisition par l'utilisateur
+$reqUserComp = $bdd->prepare('SELECT * FROM acquerir WHERE IDENTIFIANT_ETUD = ?');
+$reqUserComp->execute([$_SESSION['id']]);
+$userCompetences = $reqUserComp->fetchAll(PDO::FETCH_ASSOC);
+
+// Organiser les compétences de l'utilisateur dans un tableau pour un accès facile
+$userCompetencesMap = [];
+foreach ($userCompetences as $userComp) {
+    $userCompetencesMap[$userComp['N_ITEM']] = [
+        'ACQUISE' => $userComp['ACQUISE'],
+        'EN_COURS_ACQUISITION' => $userComp['EN_COURS_ACQUISITION'],
+    ];
+}
+
+$title = 'Compétences';
+include 'elements/header.php'; 
 ?>
 <div class="container">
     <div class="col-md-12">
         <div class="text-center">
         <h2 class="text-center"><strong><b>Compétences</b></strong></h2>
           <?php
+          // Affichage des messages d'erreur ou de succès
           if(isset($_GET['reg_err']))
           {
             $err = htmlspecialchars($_GET['reg_err']);
@@ -53,13 +71,18 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($itemCompetences as $itemCompetence => $key): ?>
+                        <?php foreach ($itemCompetences as $key): ?>
                         <tr>
-                            <td><input type="checkbox" name="<?= $itemCompetence ?>_acquis" value="<?= $key['N_ITEM'] ?>"></td>
-                            <td><input type="checkbox" name="<?= $itemCompetence ?>_enCoursAcquisition" value="<?= $key['N_ITEM'] ?>"></td>
-                            <td><?= $key[0] ?></td>
-                            <td><?= $key[1] ?></td>
-                            <td><?= $key[2] ?></td>
+                            <?php 
+                            // Vérifier si la compétence est acquise ou en cours d'acquisition par l'utilisateur
+                            $acquisChecked = isset($userCompetencesMap[$key['N_ITEM']]) && $userCompetencesMap[$key['N_ITEM']]['ACQUISE'] == 1 ? 'checked' : '';
+                            $enCoursChecked = isset($userCompetencesMap[$key['N_ITEM']]) && $userCompetencesMap[$key['N_ITEM']]['EN_COURS_ACQUISITION'] == 1 ? 'checked' : '';
+                            ?>
+                            <td><input type="checkbox" name="<?= $key['N_ITEM'] ?>_acquis" value="<?= $key['N_ITEM'] ?>" <?= $acquisChecked ?>></td>
+                            <td><input type="checkbox" name="<?= $key['N_ITEM'] ?>_enCoursAcquisition" value="<?= $key['N_ITEM'] ?>" <?= $enCoursChecked ?>></td>
+                            <td><?= $key['N_ITEM'] ?></td>
+                            <td><?= $key['LIBEL_ENSEMBLE_COMPETENCE'] ?></td>
+                            <td><?= $key['LIBEL_ITEM'] ?></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
